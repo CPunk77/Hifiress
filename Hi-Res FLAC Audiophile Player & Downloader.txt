@@ -1,0 +1,1306 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Search, Download, 
+  Sliders, Palette, Music, CheckCircle2, HardDrive, ArrowDownToLine, 
+  Volume2, Disc, Layers, Sparkles, ChevronRight, Copy, Check, Info, Settings,
+  Radio, Zap, Shield, FileText, Heart, Plus, Trash2, ShieldCheck, RefreshCw,
+  ListMusic, Compass, Filter, User, FolderPlus, Tag, Star
+} from 'lucide-react';
+
+// Инициализирующий список локальных треков
+const INITIAL_LIBRARY = [
+  {
+    id: 'flac-1',
+    title: 'Hotel California (Live Master Unplugged)',
+    artist: 'Eagles',
+    album: 'Hell Freezes Over',
+    duration: '6:39',
+    durationSec: 399,
+    bitrate: '2822 kbps',
+    sampleRate: '24-bit / 96.0 kHz',
+    format: 'FLAC Lossless',
+    size: '134.2 MB',
+    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60',
+    downloaded: true,
+    favorite: true,
+    genre: 'Classic Rock',
+    isHiRes: true
+  },
+  {
+    id: 'flac-2',
+    title: 'Time (2023 Remaster)',
+    artist: 'Pink Floyd',
+    album: 'The Dark Side of the Moon',
+    duration: '6:53',
+    durationSec: 413,
+    bitrate: '4608 kbps',
+    sampleRate: '24-bit / 192.0 kHz',
+    format: 'FLAC Hi-Res',
+    size: '228.6 MB',
+    cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&auto=format&fit=crop&q=60',
+    downloaded: true,
+    favorite: true,
+    genre: 'Progressive Rock',
+    isHiRes: true
+  },
+  {
+    id: 'flac-3',
+    title: 'Random Access Memories (Studio Master)',
+    artist: 'Daft Punk',
+    album: 'Give Life Back to Music',
+    duration: '4:35',
+    durationSec: 275,
+    bitrate: '1536 kbps',
+    sampleRate: '24-bit / 48.0 kHz',
+    format: 'FLAC Lossless',
+    size: '50.4 MB',
+    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=60',
+    downloaded: true,
+    favorite: false,
+    genre: 'Electronic',
+    isHiRes: false
+  }
+];
+
+// База данных поиска
+const SEARCH_RESULTS_DATABASE = [
+  {
+    id: 'search-1',
+    title: 'Bohemian Rhapsody (Direct Master Transfer)',
+    artist: 'Queen',
+    album: 'A Night at the Opera',
+    duration: '5:55',
+    durationSec: 355,
+    bitrate: '3100 kbps',
+    sampleRate: '24-bit / 96.0 kHz',
+    format: 'FLAC Lossless',
+    size: '131.5 MB',
+    cover: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=500&auto=format&fit=crop&q=60',
+    genre: 'Rock'
+  },
+  {
+    id: 'search-2',
+    title: 'Take Five (Audiophile Vinyl Rip)',
+    artist: 'Dave Brubeck Quartet',
+    album: 'Time Out',
+    duration: '5:24',
+    durationSec: 324,
+    bitrate: '2304 kbps',
+    sampleRate: '24-bit / 96.0 kHz',
+    format: 'FLAC Hi-Res',
+    size: '89.2 MB',
+    cover: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=500&auto=format&fit=crop&q=60',
+    genre: 'Jazz'
+  },
+  {
+    id: 'search-3',
+    title: 'Stairway to Heaven (Original 1971 Master)',
+    artist: 'Led Zeppelin',
+    album: 'Led Zeppelin IV',
+    duration: '8:02',
+    durationSec: 482,
+    bitrate: '4608 kbps',
+    sampleRate: '24-bit / 192.0 kHz',
+    format: 'FLAC Ultra Hi-Res',
+    size: '265.8 MB',
+    cover: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=500&auto=format&fit=crop&q=60',
+    genre: 'Classic Rock'
+  },
+  {
+    id: 'search-4',
+    title: 'Clair de Lune (Solo Piano Hi-Res)',
+    artist: 'Claude Debussy',
+    album: 'Suite Bergamasque',
+    duration: '5:03',
+    durationSec: 303,
+    bitrate: '1411 kbps',
+    sampleRate: '16-bit / 44.1 kHz',
+    format: 'FLAC Standard',
+    size: '51.0 MB',
+    cover: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=500&auto=format&fit=crop&q=60',
+    genre: 'Classical'
+  }
+];
+
+// Рекомендованные релизы на основе интересов
+const RECOMMENDATIONS_CATALOG = [
+  {
+    id: 'rec-1',
+    title: 'Midnight City (Synthwave Master)',
+    artist: 'M83',
+    album: 'Hurry Up, We\'re Dreaming',
+    genre: 'Electronic',
+    bitrate: '3020 kbps',
+    sampleRate: '24-bit / 96 kHz',
+    size: '112.4 MB',
+    matchScore: '98% совпадение',
+    cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'rec-2',
+    title: 'Nuvole Bianche (Acoustic Grand)',
+    artist: 'Ludovico Einaudi',
+    album: 'Una Mattina',
+    genre: 'Neoclassical',
+    bitrate: '2110 kbps',
+    sampleRate: '24-bit / 88.2 kHz',
+    size: '78.1 MB',
+    matchScore: '95% совпадение',
+    cover: 'https://images.unsplash.com/photo-1513829596324-4bb2800c5efb?w=500&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'rec-3',
+    title: 'Cyberpunk 2077 Main Theme (FLAC Rip)',
+    artist: 'Marcin Przybyłowicz',
+    album: 'Original Soundtrack',
+    genre: 'Synthwave / Industrial',
+    bitrate: '4608 kbps',
+    sampleRate: '24-bit / 192 kHz',
+    size: '194.5 MB',
+    matchScore: '92% совпадение',
+    cover: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'rec-4',
+    title: 'Comfortably Numb (Live PULSE 1994)',
+    artist: 'Pink Floyd',
+    album: 'PULSE',
+    genre: 'Progressive Rock',
+    bitrate: '4200 kbps',
+    sampleRate: '24-bit / 96 kHz',
+    size: '188.0 MB',
+    matchScore: '99% совпадение',
+    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=60'
+  }
+];
+
+export default function App() {
+  // Навигация по вкладкам
+  const [activeTab, setActiveTab] = useState('player'); // 'player', 'recommendations', 'search', 'library', 'playlists', 'customize', 'code'
+  
+  // Состояние аудиоплеера
+  const [library, setLibrary] = useState(INITIAL_LIBRARY);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(42);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [volume, setVolume] = useState(85);
+  
+  // Плейлисты
+  const [playlists, setPlaylists] = useState([
+    { id: 'pl-1', name: 'Избранные FLAC', tracks: ['flac-1', 'flac-2'], icon: 'Heart' },
+    { id: 'pl-2', name: 'Аудиофильский Ночь', tracks: ['flac-1', 'flac-2', 'flac-3'], icon: 'Zap' },
+    { id: 'pl-3', name: 'Рок Легенды', tracks: ['flac-1', 'flac-2'], icon: 'Music' }
+  ]);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+
+  // Эквалайзер
+  const [eqPreset, setEqPreset] = useState('Аудиофил (Flat)');
+  const [eqBands, setEqBands] = useState([0, 0, 0, 0, 0]);
+  const [showEqModal, setShowEqModal] = useState(false);
+
+  // Поиск и Загрузки
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(SEARCH_RESULTS_DATABASE);
+  const [downloads, setDownloads] = useState([]);
+
+  // Предпочтения пользователя (Интересы)
+  const [userInterests, setUserInterests] = useState(['Rock', 'Electronic', 'Hi-Res 24-bit', 'Synthwave']);
+
+  // Кастомизация темы
+  const [themePreset, setThemePreset] = useState('amoled');
+  const [accentColor, setAccentColor] = useState('#6366f1');
+  const [coverEffect, setCoverEffect] = useState('glow');
+  const [fontFamily, setFontFamily] = useState('sans');
+
+  const currentTrack = library[currentTrackIndex] || INITIAL_LIBRARY[0];
+
+  // Симуляция таймера воспроизведения
+  useEffect(() => {
+    let interval = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= currentTrack.durationSec) {
+            handleNextTrack();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTrack]);
+
+  // Симуляция фоновых скачиваний
+  useEffect(() => {
+    const activeInterval = setInterval(() => {
+      setDownloads((prevDownloads) => {
+        return prevDownloads.map((item) => {
+          if (item.progress < 100) {
+            const nextProgress = Math.min(100, item.progress + Math.floor(Math.random() * 15) + 8);
+            if (nextProgress === 100) {
+              setLibrary((prevLib) => {
+                if (prevLib.some((t) => t.id === item.id)) return prevLib;
+                return [...prevLib, { ...item, downloaded: true, progress: 100, favorite: false, isHiRes: true }];
+              });
+            }
+            return {
+              ...item,
+              progress: nextProgress,
+              speed: `${(Math.random() * 5 + 10).toFixed(1)} МБ/с`
+            };
+          }
+          return item;
+        });
+      });
+    }, 700);
+
+    return () => clearInterval(activeInterval);
+  }, []);
+
+  const handleNextTrack = () => {
+    if (isShuffle) {
+      const nextIndex = Math.floor(Math.random() * library.length);
+      setCurrentTrackIndex(nextIndex);
+    } else {
+      setCurrentTrackIndex((prev) => (prev + 1) % library.length);
+    }
+    setCurrentTime(0);
+  };
+
+  const handlePrevTrack = () => {
+    setCurrentTrackIndex((prev) => (prev === 0 ? library.length - 1 : prev - 1));
+    setCurrentTime(0);
+  };
+
+  const toggleFavorite = (trackId) => {
+    setLibrary(prev => prev.map(t => t.id === trackId ? { ...t, favorite: !t.favorite } : t));
+  };
+
+  const startDownload = (track) => {
+    if (downloads.some((d) => d.id === track.id) || library.some((l) => l.id === track.id)) {
+      return;
+    }
+    const newDownloadItem = {
+      ...track,
+      progress: 0,
+      speed: '14.2 МБ/с'
+    };
+    setDownloads((prev) => [newDownloadItem, ...prev]);
+  };
+
+  const createPlaylist = () => {
+    if (!newPlaylistName.trim()) return;
+    const newPl = {
+      id: `pl-${Date.now()}`,
+      name: newPlaylistName,
+      tracks: [],
+      icon: 'Music'
+    };
+    setPlaylists([...playlists, newPl]);
+    setNewPlaylistName('');
+    setShowCreatePlaylist(false);
+  };
+
+  const applyEqPreset = (name) => {
+    setEqPreset(name);
+    switch (name) {
+      case 'Усиление баса': setEqBands([6, 4, 1, -1, 2]); break;
+      case 'Чистый вокал': setEqBands([-2, 1, 5, 4, 2]); break;
+      case 'Акустика': setEqBands([3, 2, 0, 2, 4]); break;
+      case 'Электроника': setEqBands([5, 3, -1, 2, 5]); break;
+      default: setEqBands([0, 0, 0, 0, 0]); break;
+    }
+  };
+
+  const getThemeBg = () => {
+    switch (themePreset) {
+      case 'amoled': return 'bg-black text-white';
+      case 'cyberpunk': return 'bg-slate-950 text-cyan-400 border-cyan-500/30';
+      case 'retro': return 'bg-amber-950/90 text-amber-200';
+      case 'minimal': return 'bg-neutral-900 text-neutral-100';
+      default: return 'bg-black text-white';
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  return (
+    <div className={`w-full min-h-screen flex flex-col justify-center items-center p-2 sm:p-6 transition-colors duration-300 font-${fontFamily} ${getThemeBg()}`}>
+      {/* Корпус Мобильного Устройства */}
+      <div className="w-full max-w-md h-[900px] bg-neutral-900 border border-neutral-800 rounded-[42px] shadow-2xl flex flex-col overflow-hidden relative border-opacity-60 ring-1 ring-white/10">
+        
+        {/* Верхняя строка статуса Android */}
+        <div className="w-full h-8 px-6 pt-2 flex justify-between items-center text-xs text-neutral-400 font-mono select-none z-30">
+          <span>12:45</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1 rounded font-bold">FLAC Hi-Res</span>
+            <WifiIcon className="w-3.5 h-3.5" />
+            <BatteryIcon className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Шапка приложения */}
+        <div className="px-5 py-3 flex justify-between items-center z-20 border-b border-white/5 bg-black/30 backdrop-blur-md">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${accentColor}25` }}>
+              <Radio className="w-5 h-5" style={{ color: accentColor }} />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold tracking-wide flex items-center gap-1.5">
+                SONIC FLAC
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">24-BIT</span>
+              </h1>
+              <p className="text-[10px] text-neutral-400">Прямой lossless аудио-поток</p>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => setShowEqModal(true)}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors border border-white/10 flex items-center justify-center text-neutral-300"
+            title="Эквалайзер"
+          >
+            <Sliders className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Главная Рабочая Область */}
+        <div className="flex-1 overflow-y-auto relative scrollbar-none">
+          {activeTab === 'player' && (
+            <PlayerTab 
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              currentTime={currentTime}
+              setCurrentTime={setCurrentTime}
+              handleNextTrack={handleNextTrack}
+              handlePrevTrack={handlePrevTrack}
+              isShuffle={isShuffle}
+              setIsShuffle={setIsShuffle}
+              isRepeat={isRepeat}
+              setIsRepeat={setIsRepeat}
+              accentColor={accentColor}
+              coverEffect={coverEffect}
+              volume={volume}
+              setVolume={setVolume}
+              toggleFavorite={toggleFavorite}
+              formatTime={formatTime}
+            />
+          )}
+
+          {activeTab === 'recommendations' && (
+            <RecommendationsTab 
+              userInterests={userInterests}
+              setUserInterests={setUserInterests}
+              recommendations={RECOMMENDATIONS_CATALOG}
+              startDownload={startDownload}
+              accentColor={accentColor}
+              downloads={downloads}
+              library={library}
+            />
+          )}
+
+          {activeTab === 'search' && (
+            <SearchTab 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchResults={searchResults}
+              downloads={downloads}
+              startDownload={startDownload}
+              accentColor={accentColor}
+              library={library}
+            />
+          )}
+
+          {activeTab === 'library' && (
+            <LibraryTab 
+              library={library}
+              currentTrack={currentTrack}
+              setCurrentTrackIndex={setCurrentTrackIndex}
+              setIsPlaying={setIsPlaying}
+              accentColor={accentColor}
+              toggleFavorite={toggleFavorite}
+            />
+          )}
+
+          {activeTab === 'playlists' && (
+            <PlaylistsTab 
+              playlists={playlists}
+              library={library}
+              setCurrentTrackIndex={setCurrentTrackIndex}
+              setIsPlaying={setIsPlaying}
+              showCreatePlaylist={showCreatePlaylist}
+              setShowCreatePlaylist={setShowCreatePlaylist}
+              newPlaylistName={newPlaylistName}
+              setNewPlaylistName={setNewPlaylistName}
+              createPlaylist={createPlaylist}
+              accentColor={accentColor}
+            />
+          )}
+
+          {activeTab === 'customize' && (
+            <CustomizeTab 
+              themePreset={themePreset}
+              setThemePreset={setThemePreset}
+              accentColor={accentColor}
+              setAccentColor={setAccentColor}
+              coverEffect={coverEffect}
+              setCoverEffect={setCoverEffect}
+              fontFamily={fontFamily}
+              setFontFamily={setFontFamily}
+            />
+          )}
+
+          {activeTab === 'code' && (
+            <CodeViewerTab accentColor={accentColor} />
+          )}
+        </div>
+
+        {/* Модальное окно Эквалайзера */}
+        {showEqModal && (
+          <EqualizerModal 
+            onClose={() => setShowEqModal(false)}
+            eqPreset={eqPreset}
+            applyEqPreset={applyEqPreset}
+            eqBands={eqBands}
+            setEqBands={setEqBands}
+            accentColor={accentColor}
+          />
+        )}
+
+        {/* Нижняя Навигационная Панель */}
+        <div className="w-full bg-neutral-950/95 border-t border-white/10 px-1 py-2 flex justify-around items-center z-30 backdrop-blur-xl">
+          <NavButton 
+            active={activeTab === 'player'} 
+            onClick={() => setActiveTab('player')} 
+            icon={<Disc className="w-4 h-4" />} 
+            label="Плеер"
+            accentColor={accentColor}
+          />
+          <NavButton 
+            active={activeTab === 'recommendations'} 
+            onClick={() => setActiveTab('recommendations')} 
+            icon={<Compass className="w-4 h-4" />} 
+            label="Микс"
+            accentColor={accentColor}
+          />
+          <NavButton 
+            active={activeTab === 'search'} 
+            onClick={() => setActiveTab('search')} 
+            icon={<Search className="w-4 h-4" />} 
+            label="Поиск"
+            accentColor={accentColor}
+            badge={downloads.filter(d => d.progress < 100).length}
+          />
+          <NavButton 
+            active={activeTab === 'library'} 
+            onClick={() => setActiveTab('library')} 
+            icon={<HardDrive className="w-4 h-4" />} 
+            label="Треки"
+            accentColor={accentColor}
+            badge={library.length}
+          />
+          <NavButton 
+            active={activeTab === 'playlists'} 
+            onClick={() => setActiveTab('playlists')} 
+            icon={<ListMusic className="w-4 h-4" />} 
+            label="Списки"
+            accentColor={accentColor}
+          />
+          <NavButton 
+            active={activeTab === 'customize'} 
+            onClick={() => setActiveTab('customize')} 
+            icon={<Palette className="w-4 h-4" />} 
+            label="Стиль"
+            accentColor={accentColor}
+          />
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// ВКЛАДКИ ПРИЛОЖЕНИЯ
+// ==========================================
+
+function PlayerTab({ 
+  currentTrack, isPlaying, setIsPlaying, currentTime, setCurrentTime, 
+  handleNextTrack, handlePrevTrack, isShuffle, setIsShuffle, 
+  isRepeat, setIsRepeat, accentColor, coverEffect, volume, setVolume, toggleFavorite, formatTime 
+}) {
+  return (
+    <div className="p-6 flex flex-col items-center justify-between min-h-full space-y-4">
+      
+      {/* Характеристики аудиопотока */}
+      <div className="w-full flex justify-between items-center text-xs bg-white/5 border border-white/10 p-2.5 rounded-xl backdrop-blur-md">
+        <div className="flex items-center space-x-2">
+          <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+          <div>
+            <span className="font-bold text-neutral-200">{currentTrack.format}</span>
+            <span className="text-neutral-400 text-[11px] block">{currentTrack.sampleRate}</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <span className="font-mono text-xs px-2 py-0.5 rounded bg-black/40 border border-white/10 text-emerald-400">
+            {currentTrack.bitrate}
+          </span>
+        </div>
+      </div>
+
+      {/* Обложка альбома с кастомным оформлением */}
+      <div className="relative w-60 h-60 my-1 flex items-center justify-center">
+        {coverEffect === 'glow' && (
+          <div 
+            className="absolute inset-0 rounded-3xl blur-2xl opacity-50 transition-all duration-700"
+            style={{ 
+              backgroundImage: `url(${currentTrack.cover})`,
+              backgroundSize: 'cover'
+            }}
+          />
+        )}
+
+        {coverEffect === 'vinyl' && (
+          <div className={`absolute w-56 h-56 rounded-full border-4 border-neutral-800 bg-neutral-950 shadow-2xl flex items-center justify-center ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '8s' }}>
+            <div className="w-20 h-20 rounded-full border border-neutral-700 bg-neutral-900 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-neutral-950 border border-neutral-800" />
+            </div>
+          </div>
+        )}
+
+        <div className={`relative z-10 w-52 h-52 rounded-2xl overflow-hidden shadow-2xl border border-white/10 transition-transform duration-300 ${isPlaying ? 'scale-105' : 'scale-95'} ${coverEffect === 'glass' ? 'backdrop-blur-md bg-white/10 p-2' : ''}`}>
+          <img 
+            src={currentTrack.cover} 
+            alt={currentTrack.title} 
+            className="w-full h-full object-cover rounded-xl"
+          />
+        </div>
+      </div>
+
+      {/* Анимированный Спектроанализатор */}
+      <div className="w-full h-8 flex items-end justify-center space-x-1.5 px-4">
+        {[40, 75, 30, 90, 60, 100, 45, 80, 55, 95, 35, 70, 85, 50, 65, 90, 40, 80].map((height, i) => (
+          <div 
+            key={i} 
+            className="w-1.5 rounded-t-full transition-all duration-200"
+            style={{ 
+              height: isPlaying ? `${Math.max(15, (height * (Math.sin(currentTime + i) + 1.5)) / 2.5)}%` : '15%',
+              backgroundColor: accentColor,
+              opacity: isPlaying ? 0.9 : 0.3
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Метаданные трека */}
+      <div className="w-full flex justify-between items-center px-2">
+        <div className="text-left space-y-0.5 overflow-hidden pr-2">
+          <h2 className="text-base font-bold truncate text-white tracking-wide">{currentTrack.title}</h2>
+          <p className="text-xs text-neutral-400 truncate">{currentTrack.artist} — <span className="text-neutral-500">{currentTrack.album}</span></p>
+        </div>
+        <button 
+          onClick={() => toggleFavorite(currentTrack.id)}
+          className="p-2 text-neutral-400 hover:text-red-500 transition-colors"
+        >
+          <Heart className={`w-5 h-5 ${currentTrack.favorite ? 'fill-red-500 text-red-500' : ''}`} />
+        </button>
+      </div>
+
+      {/* Полоса прокрутки */}
+      <div className="w-full space-y-1 px-2">
+        <input 
+          type="range" 
+          min="0" 
+          max={currentTrack.durationSec} 
+          value={currentTime} 
+          onChange={(e) => setCurrentTime(Number(e.target.value))}
+          className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+          style={{ accentColor: accentColor }}
+        />
+        <div className="flex justify-between text-[11px] text-neutral-400 font-mono">
+          <span>{formatTime(currentTime)}</span>
+          <span>{currentTrack.duration}</span>
+        </div>
+      </div>
+
+      {/* Кнопки управления */}
+      <div className="w-full flex justify-between items-center px-4 pt-1">
+        <button 
+          onClick={() => setIsShuffle(!isShuffle)}
+          className={`p-2 rounded-full transition-colors ${isShuffle ? 'text-amber-400 bg-amber-400/10' : 'text-neutral-400 hover:text-white'}`}
+        >
+          <Shuffle className="w-4 h-4" />
+        </button>
+
+        <button 
+          onClick={handlePrevTrack}
+          className="p-3 text-neutral-200 hover:text-white active:scale-95 transition-transform"
+        >
+          <SkipBack className="w-6 h-6" />
+        </button>
+
+        <button 
+          onClick={() => setIsPlaying(!isPlaying)}
+          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform border border-white/20"
+          style={{ backgroundColor: accentColor, color: '#fff' }}
+        >
+          {isPlaying ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current ml-0.5" />}
+        </button>
+
+        <button 
+          onClick={handleNextTrack}
+          className="p-3 text-neutral-200 hover:text-white active:scale-95 transition-transform"
+        >
+          <SkipForward className="w-6 h-6" />
+        </button>
+
+        <button 
+          onClick={() => setIsRepeat(!isRepeat)}
+          className={`p-2 rounded-full transition-colors ${isRepeat ? 'text-amber-400 bg-amber-400/10' : 'text-neutral-400 hover:text-white'}`}
+        >
+          <Repeat className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Громкость */}
+      <div className="w-full flex items-center space-x-3 px-6 text-neutral-400">
+        <Volume2 className="w-4 h-4" />
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          className="w-full h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer"
+          style={{ accentColor: accentColor }}
+        />
+        <span className="text-[10px] font-mono w-6 text-right">{volume}%</span>
+      </div>
+
+    </div>
+  );
+}
+
+function RecommendationsTab({ userInterests, setUserInterests, recommendations, startDownload, accentColor, downloads, library }) {
+  const allGenres = ['Rock', 'Electronic', 'Hi-Res 24-bit', 'Synthwave', 'Neoclassical', 'Jazz', 'Industrial'];
+
+  const toggleInterest = (genre) => {
+    if (userInterests.includes(genre)) {
+      setUserInterests(userInterests.filter(g => g !== genre));
+    } else {
+      setUserInterests([...userInterests, genre]);
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          Персональный FLAC Микс
+          <Sparkles className="w-4 h-4 text-amber-400" />
+        </h2>
+        <p className="text-xs text-neutral-400">Рекомендации с учетом ваших жанровых предпочтений.</p>
+      </div>
+
+      {/* Выбор интересов */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">Мои предпочтения</label>
+        <div className="flex flex-wrap gap-1.5">
+          {allGenres.map((g) => {
+            const active = userInterests.includes(g);
+            return (
+              <button
+                key={g}
+                onClick={() => toggleInterest(g)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                  active 
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                    : 'bg-white/5 text-neutral-400 border border-white/5 hover:text-white'
+                }`}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Список рекомендованных релизов */}
+      <div className="space-y-2 pt-2">
+        <h3 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Рекомендуемые Студийные Релизы</h3>
+
+        {recommendations.map((rec) => {
+          const isDownloaded = library.some((l) => l.id === rec.id);
+          const isDownloading = downloads.some((d) => d.id === rec.id && d.progress < 100);
+
+          return (
+            <div key={rec.id} className="bg-neutral-900/80 border border-white/10 rounded-xl p-3 space-y-2">
+              <div className="flex space-x-3 items-center">
+                <img src={rec.cover} alt={rec.title} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                <div className="overflow-hidden flex-1">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-xs font-bold text-white truncate pr-1">{rec.title}</h4>
+                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 flex-shrink-0">
+                      {rec.matchScore}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 truncate">{rec.artist} • {rec.album}</p>
+                  <p className="text-[9px] font-mono text-amber-400 mt-0.5">{rec.bitrate} ({rec.sampleRate})</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-1 border-t border-white/5 text-xs">
+                <span className="text-[10px] text-neutral-500 font-mono">Объем: {rec.size}</span>
+                <button
+                  onClick={() => startDownload(rec)}
+                  disabled={isDownloaded || isDownloading}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all ${
+                    isDownloaded 
+                      ? 'bg-emerald-500/20 text-emerald-400' 
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                  }`}
+                >
+                  {isDownloaded ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>В библиотеке</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Скачать FLAC</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SearchTab({ searchQuery, setSearchQuery, searchResults, downloads, startDownload, accentColor, library }) {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          Поиск FLAC репозитория
+          <span className="text-[10px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-mono">Lossless</span>
+        </h2>
+        <p className="text-xs text-neutral-400">Прямой доступ к несжатым аудиофайлам в высоком разрешении.</p>
+      </div>
+
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-3.5 text-neutral-400" />
+        <input 
+          type="text" 
+          placeholder="Поиск артиста, альбома или трека..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-neutral-800/80 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 transition-colors"
+        />
+      </div>
+
+      {downloads.length > 0 && (
+        <div className="space-y-2 bg-neutral-900/90 border border-white/10 rounded-xl p-3">
+          <h3 className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+            <ArrowDownToLine className="w-3.5 h-3.5" />
+            Активные загрузки FLAC ({downloads.filter(d => d.progress < 100).length})
+          </h3>
+
+          <div className="space-y-2">
+            {downloads.map((item) => (
+              <div key={item.id} className="bg-black/40 p-2.5 rounded-lg border border-white/5 space-y-1.5">
+                <div className="flex justify-between items-start">
+                  <div className="pr-2">
+                    <p className="text-xs font-bold text-white truncate">{item.title}</p>
+                    <p className="text-[10px] text-neutral-400">{item.artist} • {item.size}</p>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                    {item.progress === 100 ? 'Завершено' : item.speed}
+                  </span>
+                </div>
+
+                <div className="w-full bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full transition-all duration-300"
+                    style={{ width: `${item.progress}%`, backgroundColor: accentColor }}
+                  />
+                </div>
+                <div className="flex justify-between text-[9px] text-neutral-400 font-mono">
+                  <span>{item.format} ({item.sampleRate})</span>
+                  <span>{item.progress}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2 pt-1">
+        <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Результаты поиска</h3>
+
+        {searchResults.map((track) => {
+          const isDownloaded = library.some((l) => l.id === track.id) || downloads.some((d) => d.id === track.id && d.progress === 100);
+          const isDownloading = downloads.some((d) => d.id === track.id && d.progress < 100);
+
+          return (
+            <div 
+              key={track.id} 
+              className="flex items-center justify-between p-2.5 bg-neutral-900/60 hover:bg-neutral-800/60 border border-white/5 rounded-xl transition-all"
+            >
+              <div className="flex items-center space-x-3 overflow-hidden pr-2">
+                <img src={track.cover} alt={track.title} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                <div className="overflow-hidden">
+                  <h4 className="text-xs font-bold text-white truncate">{track.title}</h4>
+                  <p className="text-[11px] text-neutral-400 truncate">{track.artist}</p>
+                  <div className="flex items-center space-x-2 mt-0.5">
+                    <span className="text-[9px] font-mono bg-white/10 px-1.5 py-0.2 rounded text-neutral-300">{track.format}</span>
+                    <span className="text-[9px] text-neutral-500 font-mono">{track.size}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => startDownload(track)}
+                disabled={isDownloaded || isDownloading}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 flex-shrink-0 transition-all ${
+                  isDownloaded 
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                    : isDownloading
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                }`}
+              >
+                {isDownloaded ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Скачано</span>
+                  </>
+                ) : isDownloading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Загрузка</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Скачать</span>
+                  </>
+                )}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LibraryTab({ library, currentTrack, setCurrentTrackIndex, setIsPlaying, accentColor, toggleFavorite }) {
+  const [filterMode, setFilterMode] = useState('all'); // 'all', 'favorites', 'hires'
+  const totalStorageMB = library.reduce((acc, item) => acc + parseFloat(item.size), 0).toFixed(1);
+
+  const filteredLibrary = library.filter((item) => {
+    if (filterMode === 'favorites') return item.favorite;
+    if (filterMode === 'hires') return item.isHiRes;
+    return true;
+  });
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Статистика хранилища */}
+      <div className="bg-neutral-900/90 border border-white/10 rounded-xl p-3.5 flex justify-between items-center">
+        <div>
+          <h2 className="text-xs font-bold text-neutral-300 uppercase tracking-wider">Локальное FLAC Хранилище</h2>
+          <p className="text-base font-extrabold text-white">{library.length} Аудиофайлов</p>
+          <p className="text-[11px] text-neutral-400">Объем: {totalStorageMB} МБ • Lossless Качество</p>
+        </div>
+        <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-emerald-400">
+          <HardDrive className="w-6 h-6" />
+        </div>
+      </div>
+
+      {/* Фильтры сортировки */}
+      <div className="flex space-x-2">
+        {[
+          { id: 'all', label: 'Все треки' },
+          { id: 'favorites', label: 'Избранное' },
+          { id: 'hires', label: 'Hi-Res (24-bit)' }
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilterMode(f.id)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              filterMode === f.id 
+                ? 'bg-indigo-600 text-white border-indigo-500' 
+                : 'bg-neutral-800/60 text-neutral-400 border-white/5 hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Список треков */}
+      <div className="space-y-2">
+        {filteredLibrary.map((track, idx) => {
+          const isSelected = currentTrack.id === track.id;
+
+          return (
+            <div 
+              key={track.id}
+              onClick={() => {
+                const realIndex = library.findIndex(t => t.id === track.id);
+                setCurrentTrackIndex(realIndex);
+                setIsPlaying(true);
+              }}
+              className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
+                isSelected 
+                  ? 'bg-neutral-800 border-indigo-500/50 shadow-md' 
+                  : 'bg-neutral-900/50 hover:bg-neutral-800/40 border-white/5'
+              }`}
+            >
+              <div className="flex items-center space-x-3 overflow-hidden">
+                <img src={track.cover} alt={track.title} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                <div className="overflow-hidden">
+                  <h4 className={`text-xs font-bold truncate ${isSelected ? 'text-amber-400' : 'text-white'}`}>
+                    {track.title}
+                  </h4>
+                  <p className="text-[11px] text-neutral-400 truncate">{track.artist}</p>
+                  <p className="text-[9px] font-mono text-emerald-400 mt-0.5">{track.sampleRate} • {track.bitrate}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 flex-shrink-0 pl-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(track.id);
+                  }}
+                  className="p-1 text-neutral-400 hover:text-red-500"
+                >
+                  <Heart className={`w-4 h-4 ${track.favorite ? 'fill-red-500 text-red-500' : ''}`} />
+                </button>
+                <div className="text-right">
+                  <span className="text-xs font-mono text-neutral-400 block">{track.duration}</span>
+                  <span className="text-[9px] font-mono text-neutral-500">{track.size}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PlaylistsTab({ playlists, library, setCurrentTrackIndex, setIsPlaying, showCreatePlaylist, setShowCreatePlaylist, newPlaylistName, setNewPlaylistName, createPlaylist, accentColor }) {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-base font-bold text-white">Мои Плейлисты</h2>
+          <p className="text-xs text-neutral-400">Пользовательские коллекции и смарт-подборки</p>
+        </div>
+        <button 
+          onClick={() => setShowCreatePlaylist(!showCreatePlaylist)}
+          className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Создать</span>
+        </button>
+      </div>
+
+      {showCreatePlaylist && (
+        <div className="bg-neutral-900 border border-white/10 p-3 rounded-xl space-y-2">
+          <input 
+            type="text" 
+            placeholder="Название нового плейлиста..." 
+            value={newPlaylistName}
+            onChange={(e) => setNewPlaylistName(e.target.value)}
+            className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none"
+          />
+          <div className="flex justify-end space-x-2">
+            <button onClick={() => setShowCreatePlaylist(false)} className="px-3 py-1 bg-white/5 text-neutral-400 text-xs rounded-lg">Отмена</button>
+            <button onClick={createPlaylist} className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-lg font-bold">Сохранить</button>
+          </div>
+        </div>
+      )}
+
+      {/* Список Плейлистов */}
+      <div className="space-y-3">
+        {playlists.map((pl) => (
+          <div key={pl.id} className="bg-neutral-900/80 border border-white/10 rounded-xl p-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <ListMusic className="w-4 h-4 text-amber-400" />
+                <h3 className="text-xs font-bold text-white">{pl.name}</h3>
+              </div>
+              <span className="text-[10px] font-mono text-neutral-400">{pl.tracks.length} треков</span>
+            </div>
+
+            <div className="space-y-1">
+              {pl.tracks.slice(0, 2).map((tId) => {
+                const track = library.find(t => t.id === tId);
+                if (!track) return null;
+                return (
+                  <div key={tId} className="text-[11px] text-neutral-400 truncate pl-2 border-l border-white/10">
+                    {track.artist} — {track.title}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomizeTab({ themePreset, setThemePreset, accentColor, setAccentColor, coverEffect, setCoverEffect, fontFamily, setFontFamily }) {
+  const accentPresets = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
+
+  return (
+    <div className="p-4 space-y-5">
+      <div className="space-y-1">
+        <h2 className="text-base font-bold text-white">Кастомизация Плеера</h2>
+        <p className="text-xs text-neutral-400">Персонализация интерфейса, цветовых акцентов и шрифтов.</p>
+      </div>
+
+      {/* Пресеты тем */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-neutral-300 uppercase tracking-wider block">Визуальные Темы</label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { id: 'amoled', name: 'AMOLED Pure Black', desc: 'Чистый черный для OLED экранов' },
+            { id: 'cyberpunk', name: 'Cyberpunk Neon', desc: 'Футуристичный неоновый стиль' },
+            { id: 'retro', name: 'Retro Amber', desc: 'Теплый винтажный стиль' },
+            { id: 'minimal', name: 'Minimal Dark', desc: 'Лаконичный темный интерфейс' },
+          ].map((theme) => (
+            <button
+              key={theme.id}
+              onClick={() => setThemePreset(theme.id)}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                themePreset === theme.id 
+                  ? 'border-indigo-500 bg-indigo-500/10 text-white' 
+                  : 'border-white/10 bg-neutral-900 text-neutral-400 hover:text-white'
+              }`}
+            >
+              <p className="text-xs font-bold">{theme.name}</p>
+              <p className="text-[10px] text-neutral-500">{theme.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Акцентные цвета */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-neutral-300 uppercase tracking-wider block">Цветовой Акцент</label>
+        <div className="flex space-x-3">
+          {accentPresets.map((color) => (
+            <button
+              key={color}
+              onClick={() => setAccentColor(color)}
+              className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center transition-transform hover:scale-110"
+              style={{ backgroundColor: color }}
+            >
+              {accentColor === color && <Check className="w-4 h-4 text-white" />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Эффекты обложки */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-neutral-300 uppercase tracking-wider block">Стиль Обложки Альбома</label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { id: 'glow', name: 'Мягкое Свечение' },
+            { id: 'vinyl', name: 'Виниловый Диск' },
+            { id: 'glass', name: 'Стеклянный Эффект' },
+            { id: 'simple', name: 'Классическая Обложка' }
+          ].map((eff) => (
+            <button
+              key={eff.id}
+              onClick={() => setCoverEffect(eff.id)}
+              className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                coverEffect === eff.id 
+                  ? 'border-indigo-500 bg-white/10 text-white' 
+                  : 'border-white/10 bg-neutral-900 text-neutral-400'
+              }`}
+            >
+              {eff.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CodeViewerTab() {
+  const [copied, setCopied] = useState(false);
+
+  const kotlinSnippet = `// Android Jetpack Compose + ExoPlayer FLAC Модуль
+package com.sonic.flacplayer
+
+import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.exoplayer.ExoPlayer
+
+class AudioPlayerEngine(private val context: Context) {
+    private var player: ExoPlayer = ExoPlayer.Builder(context).build()
+
+    fun playFlacStream(url: String) {
+        val mediaItem = MediaItem.Builder()
+            .setUri(Uri.parse(url))
+            .setMimeType(MimeTypes.AUDIO_FLAC)
+            .build()
+        
+        player.setMediaItem(mediaItem)
+        player.prepare()
+        player.play()
+    }
+}`;
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(kotlinSnippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-base font-bold text-white">Android Нативный Код</h2>
+          <p className="text-xs text-neutral-400">Kotlin + ExoPlayer + Coroutines</p>
+        </div>
+        <button 
+          onClick={copyCode}
+          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-xs font-mono text-white flex items-center gap-1.5 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>{copied ? 'Скопировано' : 'Скопировать'}</span>
+        </button>
+      </div>
+
+      <div className="bg-black/80 border border-white/10 rounded-xl p-3 overflow-x-auto font-mono text-[11px] text-emerald-400 leading-relaxed shadow-inner">
+        <pre>{kotlinSnippet}</pre>
+      </div>
+    </div>
+  );
+}
+
+function EqualizerModal({ onClose, eqPreset, applyEqPreset, eqBands, setEqBands, accentColor }) {
+  const bandLabels = ['60 Гц', '230 Гц', '910 Гц', '4 кГц', '14 кГц'];
+
+  return (
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="w-full bg-neutral-900 border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl">
+        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-indigo-400" />
+            5-Полосный Эквалайзер
+          </h3>
+          <button onClick={onClose} className="text-neutral-400 hover:text-white text-xs font-bold px-2 py-1 bg-white/5 rounded-lg">Закрыть</button>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-neutral-400 uppercase">Пресеты звука</label>
+          <div className="flex flex-wrap gap-1.5">
+            {['Аудиофил (Flat)', 'Усиление баса', 'Чистый вокал', 'Акустика', 'Электроника'].map((p) => (
+              <button
+                key={p}
+                onClick={() => applyEqPreset(p)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  eqPreset === p ? 'bg-indigo-500 text-white' : 'bg-white/5 text-neutral-400 hover:text-white'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center pt-2 px-2">
+          {eqBands.map((val, idx) => (
+            <div key={idx} className="flex flex-col items-center space-y-2">
+              <span className="text-[10px] font-mono text-neutral-400">{val > 0 ? `+${val}` : val}дБ</span>
+              <input 
+                type="range" 
+                min="-10" 
+                max="10" 
+                value={val}
+                onChange={(e) => {
+                  const newBands = [...eqBands];
+                  newBands[idx] = Number(e.target.value);
+                  setEqBands(newBands);
+                }}
+                className="h-28 w-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                style={{ writingMode: 'bt-lr', appearance: 'slider-vertical', accentColor: accentColor }}
+              />
+              <span className="text-[9px] font-mono text-neutral-400">{bandLabels[idx]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NavButton({ active, onClick, icon, label, accentColor, badge }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
+        active ? 'text-white' : 'text-neutral-500 hover:text-neutral-300'
+      }`}
+    >
+      <div className="relative">
+        {icon}
+        {badge > 0 && (
+          <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-500 text-black font-extrabold text-[9px] flex items-center justify-center">
+            {badge}
+          </span>
+        )}
+      </div>
+      <span className="text-[9px] font-semibold mt-1" style={{ color: active ? accentColor : undefined }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function WifiIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M5 13a10 10 0 0 1 14 0" />
+      <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+      <path d="M12 20h.01" />
+    </svg>
+  );
+}
+
+function BatteryIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2" y="7" width="16" height="10" rx="2" ry="2" />
+      <line x1="22" y1="11" x2="22" y2="13" />
+    </svg>
+  );
+}
